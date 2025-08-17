@@ -19,15 +19,16 @@ class EncodingManager: NSObject, CaptureEngineDelegate {
         super.init()
     }
     
-    func startRecording() throws {
+    func startRecording() async throws {
         guard !isRecording else { return }
         
-        outputURL = createOutputURL()
+        outputURL = await createOutputURL()
         guard let url = outputURL else {
             throw EncodingError.invalidOutputURL
         }
         
-        assetWriter = try AVAssetWriter(outputURL: url, fileType: .mov)
+        let fileType = await getFileType()
+        assetWriter = try AVAssetWriter(outputURL: url, fileType: fileType)
         
         setupVideoInput()
         setupAudioInput()
@@ -111,8 +112,19 @@ class EncodingManager: NSObject, CaptureEngineDelegate {
         }
     }
     
-    private func createOutputURL() -> URL? {
-        return RecordingFileManager.shared.generateOutputURL()
+    private func createOutputURL() async -> URL? {
+        return await RecordingFileManager.shared.generateOutputURLWithSettings()
+    }
+    
+    @MainActor
+    private func getFileType() -> AVFileType {
+        let settings = AppSettings()
+        switch settings.videoFormat {
+        case .mov:
+            return .mov
+        case .mp4:
+            return .mp4
+        }
     }
     
     private func cleanup() {

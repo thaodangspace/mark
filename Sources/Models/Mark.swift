@@ -45,7 +45,7 @@ class Mark: ObservableObject {
         
         do {
             try await captureEngine?.startCapture()
-            try encodingManager?.startRecording()
+            try await encodingManager?.startRecording()
             
             await MainActor.run {
                 isRecording = true
